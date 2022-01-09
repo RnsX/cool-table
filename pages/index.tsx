@@ -2,6 +2,7 @@ import type { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
 import { MouseEventHandler, useState } from 'react'
+import ComContainer from '../components/Comments/ComContainer'
 import styles from '../styles/Home.module.css'
 
 
@@ -23,9 +24,9 @@ const Home: NextPage = () => {
 
   const [table, setTable] = useState<ITable>({
     items: [
-      {rowNum: 1, id: 1, name: 'calculate monthly turnover', description: 'needed for business', status: 'waiting requirements', comments: []},
-      {rowNum: 2, id: 2, name: 'calculate credit turnover', description: 'needed for business', status: 'waiting requirements', comments: []},
-      {rowNum: 3, id: 3, name: 'calculate debit turnover', description: 'needed for business', status: 'waiting requirements', comments: []},
+      {rowNum: 1, id: 1, name: 'calculate monthly turnover', description: 'needed for business', status: 'waiting requirements', comments: ["added new item", "modified that item"]},
+      {rowNum: 2, id: 2, name: 'calculate credit turnover', description: 'needed for business', status: 'waiting requirements', comments: ["this should be canceled"]},
+      {rowNum: 3, id: 3, name: 'calculate debit turnover', description: 'needed for business', status: 'waiting requirements', comments: ["postponed", "returned to high priority", "soon completed, waiting on data"]},
       {rowNum: 4, id: 4, name: 'calculate deposit turnover', description: 'needed for business', status: 'waiting requirements', comments: []},
     ]
   });
@@ -68,6 +69,27 @@ const Home: NextPage = () => {
     setShowMenu({ visible: true, rowId:  parseInt(rowId), locationX: xPos, locationY: yPos});
   }
 
+  const [comModal, setComModal] = useState({
+    visible: false,
+    contents: "",
+    createdBy: "",
+    date: "",
+    forRowId: 0
+  })
+
+  const showCommentModal = (id: number) => {
+    setComModal({...comModal, visible: true, forRowId: id});
+    resetMenu();
+  }
+
+  const closeModal = () => {
+    setComModal({ visible: false, contents: '', createdBy: '', date: '', forRowId: 0});
+  }
+
+  const saveCommentModal = () => {
+
+  }
+
   return (
     <div className={styles.container}>
       <Head>
@@ -78,9 +100,26 @@ const Home: NextPage = () => {
 
       </Head>
       <div>
+        <div className='comment-modal'>
+          <div className='comment-window'>
+            <button className='btn btn-danger comment-btn-close' onClick={closeModal}>x</button>
+            <label>Comment</label>
+            <input className='form-input'/>
+            
+            <label>Created by</label>
+            <input className='form-input'/>
+
+            <label>Date created</label>
+            <input className='form-input'/>
+
+            <button className='btn btn-outline-success' onClick={saveCommentModal}>Save</button>
+          </div>
+        </div>
         <div className='rightClickMenu'>
-          <button onClick={() => {setShowMenu({ visible: false, rowId: 0, locationX: 0, locationY: 0 })}} className='btn btn-danger'>close</button>
-          <button id={showMenu.rowId.toString()} onClick={(e: React.MouseEvent<HTMLButtonElement>) => addRow(parseInt(e.currentTarget.id))} className='btn btn-outline-primary'>add row</button>
+          <button onClick={() => {setShowMenu({ visible: false, rowId: 0, locationX: 0, locationY: 0 })}} className='btn btn-danger'>Cancel</button>
+          <button id={showMenu.rowId.toString()} onClick={(e: React.MouseEvent<HTMLButtonElement>) => addRow(parseInt(e.currentTarget.id))} className='btn btn-outline-primary'>Add row</button>
+          <button id={showMenu.rowId.toString()} onClick={(e: React.MouseEvent<HTMLButtonElement>) => showCommentModal(parseInt(e.currentTarget.id))} className='btn btn-outline-primary'>New comment</button>
+        
         </div>
         <table className='table table-hover tableAdditional' >
           <tr>
@@ -102,11 +141,7 @@ const Home: NextPage = () => {
                   <td>{x.status}</td>
                   <td>
                     <ul>
-                      {
-                        x.comments.map((y)=>{
-                          return <li>{y}</li>
-                        })
-                      }
+                      <ComContainer comments={x.comments} />
                     </ul> 
                   </td>
                 </tr>
@@ -118,8 +153,44 @@ const Home: NextPage = () => {
       <style jsx>
         {
           `
+            .comment-modal {
+              position: absolute;
+              width: 100%;
+              height: 100vh;
+
+              display: ${comModal.visible == true ? 'flex' : 'none'};
+              justify-content: center;
+              align-items: center;
+              overflow: hidden;
+            }
+            .comment-window {
+              width: 400px;
+              height: fit-content;
+              border: 1px solid lightgray;
+              border-radius: 0.5em;
+              -webkit-box-shadow: 0px 0px 22px 4px rgba(0,0,0,0.3); 
+              box-shadow: 0px 0px 22px 4px rgba(0,0,0,0.3);
+              background-color: white;
+              display: flex;
+              flex-direction: column;
+              justify-content: flex-start;
+              align-items: flex-start;
+              padding: 1em;
+            }
+            .comment-window > button,input {
+              width: 100%;
+              margin-bottom: 0.8em;
+            }
+
+            .comment-btn-close {
+              position: relative;
+              max-width: fit-content;
+              margin-left: auto;
+              padding: 0em 0.4em 0em 0.4em;
+            }
+
             .rightClickMenu {
-              width: 100px;
+              width: 120px;
               height: 100px;
               border: 1px solid lightgray;
               padding: 0.33em;
@@ -132,6 +203,7 @@ const Home: NextPage = () => {
               border-radius: 0.5em;
               -webkit-box-shadow: 0px 0px 22px 4px rgba(0,0,0,0.3); 
               box-shadow: 0px 0px 22px 4px rgba(0,0,0,0.3);
+              z-index: 99;
             }
             
             .rightClickMenu > button {
